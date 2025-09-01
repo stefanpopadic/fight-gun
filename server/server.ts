@@ -378,7 +378,7 @@ io.on('connection', (socket) => {
       }
     });
 
-    // If this is the second player (friend), notify the host
+    // If this is the second player (friend), notify the host and start game immediately
     if (!isHost) {
       socket.to(data.roomId).emit('playerJoined', { 
         player: {
@@ -387,6 +387,20 @@ io.on('connection', (socket) => {
           isReady: newPlayer.isReady
         }
       });
+      
+      // Auto-start the game when second player joins
+      if (room.players.size === 2) {
+        room.status = GameStatus.Playing;
+        startGameLoop(room);
+        
+        io.to(room.id).emit('gameStarted', {
+          walls: room.walls,
+          baseZones: room.baseZones,
+          arenaDimensions: room.arenaDimensions
+        });
+        
+        console.log(`Auto-starting game in room ${data.roomId}`);
+      }
     }
 
     console.log(`Player ${playerId} joined room ${data.roomId} on team ${teamId} ${isHost ? '(host)' : '(friend)'}`);

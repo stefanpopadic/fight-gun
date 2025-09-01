@@ -234,10 +234,11 @@ export const SimpleBattleApp: React.FC<SimpleBattleAppProps> = ({ onBackToMenu }
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const battleId = urlParams.get('battle');
-    if (battleId) {
-      handleJoinBattle(battleId);
+    if (battleId && socket) {
+      console.log('Auto-joining battle:', battleId);
+      joinRoom(battleId);
     }
-  }, []);
+  }, [socket, joinRoom]);
 
   const renderContent = () => {
     if (!isConnected) {
@@ -349,12 +350,9 @@ export const SimpleBattleApp: React.FC<SimpleBattleAppProps> = ({ onBackToMenu }
           )}
 
           {battleState.friendJoined && (
-            <button
-              onClick={handleStartBattle}
-              className="px-12 py-4 bg-red-800 hover:bg-red-700 border-2 border-white text-white font-bold rounded-lg text-2xl transition-transform transform hover:scale-105 mb-6"
-            >
-              ⚔️ START BATTLE!
-            </button>
+            <div className="px-12 py-4 bg-green-800 border-2 border-green-400 text-white font-bold rounded-lg text-2xl mb-6">
+              🚀 STARTING BATTLE...
+            </div>
           )}
 
           <div className="text-left max-w-2xl mx-auto space-y-2 text-sm mt-8">
