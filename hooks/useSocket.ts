@@ -115,7 +115,10 @@ export const useSocket = (
 
   const createRoom = (teamSize: number) => {
     if (socket) {
-      socket.emit('createRoom', { teamSize });
+      socket.emit('createRoom', { 
+        teamSize, 
+        currentUrl: window.location.href 
+      });
     }
   };
 

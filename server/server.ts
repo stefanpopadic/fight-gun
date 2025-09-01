@@ -301,17 +301,22 @@ const startGameLoop = (room: GameRoom) => {
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
 
-  socket.on('createRoom', (data: { teamSize: number }) => {
+  socket.on('createRoom', (data: { teamSize: number; currentUrl?: string }) => {
     const roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
     const room = createRoom(roomId, data.teamSize);
     rooms.set(roomId, room);
     
     socket.join(roomId);
     
-    // Create shareable link for simple battles
-    const shareableLink = `${process.env.NODE_ENV === 'production' 
-      ? 'https://your-railway-domain.railway.app' 
-      : 'http://localhost:3001'}?battle=${roomId}`;
+    // Create shareable link using the current page URL
+    let shareableLink = '';
+    if (data.currentUrl) {
+      const url = new URL(data.currentUrl);
+      shareableLink = `${url.origin}?battle=${roomId}`;
+    } else {
+      // Fallback for local development
+      shareableLink = `http://localhost:3001?battle=${roomId}`;
+    }
     
     socket.emit('roomCreated', { roomId, shareableLink });
     console.log(`Room ${roomId} created with team size ${data.teamSize}`);
