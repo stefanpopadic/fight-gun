@@ -120,6 +120,7 @@ export enum GameMode {
   PVP,
   PVE,
   MULTIPLAYER,
+  SIMPLE_BATTLE,
 }
 
 export interface MultiplayerRoom {

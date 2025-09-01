@@ -9,6 +9,7 @@ import { GameStatus, AIState, AIObjective, GameMode } from './types';
 import type { Player, Bullet, Vector, Wall, AIAction, Bomb, BloodParticle, BloodSplat, PowerUp, WeaponType, MuzzleFlash, Explosion } from './types';
 import { Game } from './components/Game';
 import { MultiplayerApp } from './components/MultiplayerApp';
+import { SimpleBattleApp } from './components/SimpleBattleApp';
 import {
   ARENA_DIMENSIONS_BY_SIZE,
   PLAYER_SIZE,
@@ -907,6 +908,13 @@ const App: React.FC = () => {
           
           <div className="space-y-6">
             <button
+              onClick={() => setGameMode(GameMode.SIMPLE_BATTLE)}
+              className="w-full px-8 py-4 bg-red-800 hover:bg-red-700 border-2 border-white text-white font-bold rounded-lg text-xl transition-transform transform hover:scale-105"
+            >
+              ⚔️ Battle a Friend (Instant 1v1)
+            </button>
+            
+            <button
               onClick={() => setGameMode(GameMode.PVE)}
               className="w-full px-8 py-4 bg-blue-800 hover:bg-blue-700 border-2 border-white text-white font-bold rounded-lg text-xl transition-transform transform hover:scale-105"
             >
@@ -917,7 +925,7 @@ const App: React.FC = () => {
               onClick={() => setGameMode(GameMode.MULTIPLAYER)}
               className="w-full px-8 py-4 bg-green-800 hover:bg-green-700 border-2 border-white text-white font-bold rounded-lg text-xl transition-transform transform hover:scale-105"
             >
-              🌐 Online Multiplayer
+              🌐 Online Multiplayer (Rooms)
             </button>
           </div>
           
@@ -929,8 +937,8 @@ const App: React.FC = () => {
       );
     }
 
-    if (gameMode === GameMode.MULTIPLAYER) {
-      return null; // Handled by MultiplayerApp component
+    if (gameMode === GameMode.MULTIPLAYER || gameMode === GameMode.SIMPLE_BATTLE) {
+      return null; // Handled by MultiplayerApp or SimpleBattleApp component
     }
 
     const TeamButton: React.FC<{size: number}> = ({size}) => (
@@ -1006,6 +1014,10 @@ const App: React.FC = () => {
   
   if (gameMode === GameMode.MULTIPLAYER) {
     return <MultiplayerApp onBackToMenu={() => setGameMode(null)} />;
+  }
+
+  if (gameMode === GameMode.SIMPLE_BATTLE) {
+    return <SimpleBattleApp onBackToMenu={() => setGameMode(null)} />;
   }
 
   const shakeX = screenShake.duration > 0 ? (Math.random() - 0.5) * screenShake.magnitude : 0;

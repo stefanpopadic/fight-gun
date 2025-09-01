@@ -307,27 +307,32 @@ io.on('connection', (socket) => {
     rooms.set(roomId, room);
     
     socket.join(roomId);
-    socket.emit('roomCreated', { roomId });
+    
+    // Create shareable link for simple battles
+    const shareableLink = `${process.env.NODE_ENV === 'production' 
+      ? 'https://your-railway-domain.railway.app' 
+      : 'http://localhost:3001'}?battle=${roomId}`;
+    
+    socket.emit('roomCreated', { roomId, shareableLink });
     console.log(`Room ${roomId} created with team size ${data.teamSize}`);
   });
 
   socket.on('joinRoom', (data: { roomId: string; playerName?: string }) => {
     const room = rooms.get(data.roomId);
     if (!room) {
-      socket.emit('error', { message: 'Room not found' });
+      socket.emit('error', { message: 'Battle not found' });
       return;
     }
 
     // Check if room is full
     if (room.players.size >= room.teamSize * 2) {
-      socket.emit('error', { message: 'Room is full' });
+      socket.emit('error', { message: 'Battle is full' });
       return;
     }
 
-    // Assign team (balance teams)
-    const team1Count = Array.from(room.players.values()).filter(p => p.teamId === 1).length;
-    const team2Count = Array.from(room.players.values()).filter(p => p.teamId === 2).length;
-    const teamId = team1Count <= team2Count ? 1 : 2;
+    // For simple battles: First player is always Team A (host), second player is Team B
+    const isHost = room.players.size === 0;
+    const teamId = isHost ? 1 : 2;
 
     // Create player
     const playerId = Math.floor(Math.random() * 10000);
@@ -356,6 +361,7 @@ io.on('connection', (socket) => {
       roomId: data.roomId, 
       playerId,
       teamId,
+      isHost,
       room: {
         players: Array.from(room.players.values()).map(p => ({
           id: p.id,
@@ -367,16 +373,18 @@ io.on('connection', (socket) => {
       }
     });
 
-    // Notify other players
-    socket.to(data.roomId).emit('playerJoined', { 
-      player: {
-        id: newPlayer.id,
-        teamId: newPlayer.teamId,
-        isReady: newPlayer.isReady
-      }
-    });
+    // If this is the second player (friend), notify the host
+    if (!isHost) {
+      socket.to(data.roomId).emit('playerJoined', { 
+        player: {
+          id: newPlayer.id,
+          teamId: newPlayer.teamId,
+          isReady: newPlayer.isReady
+        }
+      });
+    }
 
-    console.log(`Player ${playerId} joined room ${data.roomId} on team ${teamId}`);
+    console.log(`Player ${playerId} joined room ${data.roomId} on team ${teamId} ${isHost ? '(host)' : '(friend)'}`);
   });
 
   socket.on('playerReady', () => {
@@ -386,20 +394,11 @@ io.on('connection', (socket) => {
     const player = room.players.get(socket.id);
     if (!player) return;
 
-    player.isReady = true;
-
-    // Check if all players are ready
-    const allReady = Array.from(room.players.values()).every(p => p.isReady);
-    const hasEnoughPlayers = room.players.size >= 2; // At least 2 players
-
-    io.to(room.id).emit('playerReadyUpdate', {
-      playerId: player.id,
-      isReady: true,
-      allReady: allReady && hasEnoughPlayers
-    });
-
-    if (allReady && hasEnoughPlayers) {
-      // Start the game
+    // For simple battles, only need the host to be ready and have 2 players
+    const hasEnoughPlayers = room.players.size >= 2;
+    
+    if (hasEnoughPlayers) {
+      // Start the game immediately
       room.status = GameStatus.Playing;
       startGameLoop(room);
       
@@ -408,6 +407,8 @@ io.on('connection', (socket) => {
         baseZones: room.baseZones,
         arenaDimensions: room.arenaDimensions
       });
+    } else {
+      socket.emit('error', { message: 'Waiting for your friend to join!' });
     }
   });
 

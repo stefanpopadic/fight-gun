@@ -33,8 +33,8 @@ interface GameData {
 }
 
 export const useSocket = (
-  onRoomCreated?: (roomId: string) => void,
-  onJoinedRoom?: (data: { roomId: string; playerId: number; teamId: number; room: any }) => void,
+  onRoomCreated?: (data: { roomId: string; shareableLink?: string }) => void,
+  onJoinedRoom?: (data: { roomId: string; playerId: number; teamId: number; isHost?: boolean; room: any }) => void,
   onPlayerJoined?: (data: { player: any }) => void,
   onPlayerLeft?: (data: { playerId: number }) => void,
   onPlayerReadyUpdate?: (data: { playerId: number; isReady: boolean; allReady: boolean }) => void,
@@ -68,7 +68,7 @@ export const useSocket = (
     // Room events
     newSocket.on('roomCreated', (data) => {
       console.log('Room created:', data);
-      onRoomCreated?.(data.roomId);
+      onRoomCreated?.(data);
     });
 
     newSocket.on('joinedRoom', (data) => {
@@ -111,7 +111,7 @@ export const useSocket = (
     return () => {
       newSocket.close();
     };
-  }, []);
+  }, [onRoomCreated, onJoinedRoom, onPlayerJoined, onPlayerLeft, onPlayerReadyUpdate, onGameStarted, onGameStateUpdate, onError]);
 
   const createRoom = (teamSize: number) => {
     if (socket) {
