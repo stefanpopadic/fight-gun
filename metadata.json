@@ -1,0 +1,5 @@
+{
+  "name": "Stick Figure Arena",
+  "description": "An ultra-simple, addictive two-player shooting game. Two stick figures battle it out in a minimalist arena. Use keyboard controls to move, aim, and shoot. Last one standing wins!",
+  "requestFramePermissions": []
+}
